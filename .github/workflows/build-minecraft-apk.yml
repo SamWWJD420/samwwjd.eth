@@ -1,0 +1,75 @@
+name: Build Amethyst APK (Pixel 9 Edition)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/amethyst-android-minecraft-apk-go67ez
+    paths:
+      - 'minecraft-launcher/**'
+      - '.github/workflows/build-minecraft-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout patches
+        uses: actions/checkout@v4
+
+      - name: Clone Amethyst-Android source
+        run: |
+          git clone --recursive https://github.com/AngelAuraMC/Amethyst-Android.git /tmp/amethyst-android --depth=1
+          echo "Amethyst-Android cloned"
+
+      - name: Apply Pixel 9 patches
+        run: |
+          # Copy modified files over the upstream source
+          cp -r minecraft-launcher/patches/* /tmp/amethyst-android/
+          echo "Patches applied successfully"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Get JRE 8 (required by Amethyst to run Minecraft)
+        uses: dawidd6/action-download-artifact@v9
+        with:
+          workflow: build.yml
+          path: /tmp/amethyst-android/app_pojavlauncher/src/main/assets/components/jre
+          workflow_conclusion: completed
+          repo: AngelAuraMC/angelauramc-openjdk-build
+          branch: buildjre8
+          name: jre8-pojav
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          validate-wrappers: false
+          gradle-version: "8.11"
+
+      - name: Run language list updater
+        working-directory: /tmp/amethyst-android
+        run: |
+          chmod +x scripts/languagelist_updater.sh
+          ./scripts/languagelist_updater.sh
+          mkdir -p out
+
+      - name: Build Debug APK
+        working-directory: /tmp/amethyst-android
+        run: |
+          gradle :app_pojavlauncher:assembleDebug
+          cp app_pojavlauncher/build/outputs/apk/debug/app_pojavlauncher-debug.apk out/amethyst-pixel9-debug.apk
+          md5sum out/amethyst-pixel9-debug.apk > out/amethyst-pixel9-debug.md5
+          echo "APK built successfully"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: amethyst-pixel9-apk
+          path: |
+            /tmp/amethyst-android/out/amethyst-pixel9-debug.apk
+            /tmp/amethyst-android/out/amethyst-pixel9-debug.md5
+          retention-days: 30
