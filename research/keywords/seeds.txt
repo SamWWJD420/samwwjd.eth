@@ -1,0 +1,21 @@
+# One seed per line. Google Ads takes max 20 seeds per idea request; the script batches.
+migrate lovable
+lovable export
+lovable to github
+lovable to vercel
+lovable to supabase
+lovable to claude code
+export lovable to cursor
+bolt to github
+bolt app keeps crashing
+vibe code cleanup
+vibe code cleanup specialist
+fix vibe coded app
+fix my vibe coded app
+vibe coded app security
+vibe code review
+vibe code to production
+cursor stuck in loop
+vibe coding context window
+claude code context window
+google ai studio build
